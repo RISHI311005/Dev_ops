@@ -1,0 +1,39 @@
+###############################################################################
+# docker-compose.yml  -  Jenkins controller running on your Windows laptop
+#
+#   cd jenkins
+#   docker compose up -d --build
+#   docker compose logs -f
+#
+#   Jenkins UI  : http://localhost:8080
+#   Agent port  : 50000  (only needed for inbound agents, exposed locally)
+#
+# The controller is reachable ONLY from your own machine - it is never opened
+# to the internet and no Azure Network Security Group allows port 8080.
+###############################################################################
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: devops-cicd-jenkins:latest
+    container_name: jenkins-cicd
+    restart: unless-stopped
+
+    ports:
+      - "8080:8080"    # Jenkins web interface
+      - "50000:50000"  # inbound build agents (local only)
+
+    volumes:
+      # Persistent Jenkins home: keeps the setup wizard result, the credentials
+      # and every job even if the container is recreated.
+      - jenkins_home:/var/jenkins_home
+
+    environment:
+      # Java options for the controller. The setup wizard stays enabled so you
+      # create the first administrator account yourself.
+      - JAVA_OPTS=-Xmx1024m
+      - TZ=UTC
+
+volumes:
+  jenkins_home:
